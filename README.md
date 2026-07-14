@@ -106,6 +106,51 @@ in the UI.
   lossless stream-copy), so a "5 minute" chunk may be off by a second or two. **By
   count** and **by chapters** cut each part explicitly for an exact result.
 
+## Troubleshooting / FAQ
+
+**"Sign in to confirm you're not a bot" — or resolutions are missing.**
+YouTube requires solving a JavaScript challenge and a signed-in cookie jar.
+Make sure **Node.js is installed** (VideoDrop uses it plus `--remote-components
+ejs:github` to solve the challenge) and pick a **cookie source** in the UI. If you
+just installed Node, restart the server.
+
+**"Could not copy Chrome cookie database".**
+Chrome and Edge lock their cookie database while the browser is open. Either close
+the browser, or switch the cookie source to **Firefox** (it doesn't lock) — the
+default.
+
+**"Video unavailable" / private / age-restricted.**
+The video is removed, private, region-locked, or age-gated. For age-gated content,
+sign into the browser whose cookies you selected; that's usually enough.
+
+**Port already in use (`WinError 10048` / "Address already in use").**
+Another VideoDrop instance is already running on port 7654, or something else holds
+the port. Stop the other instance, or change `PORT` at the top of `app.py`.
+
+**`ffmpeg not on PATH` / `node not on PATH` banner at the top of the page.**
+A prerequisite is missing — see [Prerequisites](#prerequisites). Install it, then
+restart the server. (yt-dlp problems usually mean `pip install -U yt-dlp`.)
+
+**First fetch is slow (~a few seconds).**
+The first time per session, yt-dlp downloads the challenge-solver library. Later
+fetches are quick.
+
+**"this video has no chapters".**
+You asked for a chapter split on a video without chapter markers. Use *by time /
+count / size* instead. (The UI disables the chapters option when a video has none;
+you'll only see this via the batch queue.)
+
+**"chapter split can't be combined with trim".**
+Chapter timestamps refer to the full timeline, so a trim would misalign them. Pick
+one or the other.
+
+**Chunk lengths are a second or two off.**
+*By time* and *by size* stream-copy and can only cut on keyframes, so a boundary may
+drift slightly. Use *by count* or *by chapters* for exact cuts, or re-encode first.
+
+**A download failed but I want to try again.**
+Use the **Retry** button (single downloads) or re-add the URL to the batch queue.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
