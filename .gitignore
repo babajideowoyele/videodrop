@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+
+# runtime scratch
+.final_*.txt
+_check.js
+_c.js
+
+# never commit downloaded media
+*.mp4
+*.mp3
+*.m4a
+*.webm
+*.mkv
+*.srt
+*.vtt
+*_parts/

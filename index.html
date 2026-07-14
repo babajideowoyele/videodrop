@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIDEODROP</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#f5f5f5; --card:#fff; --hover:#f4f4f4; --border:#e0e0e0;
+      --text:#161616; --text2:#393939; --focus:#0f62fe;
+      --success:#198038; --success-l:#defbe6; --warn:#f1c21b;
+      --error:#da1e28; --error-l:#fff1f1; --info:#0f62fe; --info-l:#edf5ff;
+      --ink:#161616; --on-ink:#fff;              /* strong accent + text on it */
+      --header-bg:#161616; --header-fg:#f4f4f4;   /* brand bar, dark in both themes */
+    }
+    @media (prefers-color-scheme: dark){
+      :root:not([data-theme="light"]){
+        --bg:#161616; --card:#262626; --hover:#333333; --border:#3d3d3d;
+        --text:#f4f4f4; --text2:#a8a8a8;
+        --success:#42be65; --success-l:#0d3016; --error:#ff8389; --error-l:#3d1418;
+        --info:#78a9ff; --info-l:#0d2136;
+        --ink:#f4f4f4; --on-ink:#161616; --header-bg:#0b0b0b;
+      }
+    }
+    :root[data-theme="dark"]{
+      --bg:#161616; --card:#262626; --hover:#333333; --border:#3d3d3d;
+      --text:#f4f4f4; --text2:#a8a8a8;
+      --success:#42be65; --success-l:#0d3016; --error:#ff8389; --error-l:#3d1418;
+      --info:#78a9ff; --info-l:#0d2136;
+      --ink:#f4f4f4; --on-ink:#161616; --header-bg:#0b0b0b;
+    }
+    body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.5;min-height:100vh;transition:background .2s,color .2s}
+    *:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+    .accent-bar{height:3px;background:var(--ink)}
+    .app-header{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:48px;background:var(--header-bg);color:var(--header-fg)}
+    .app-logo{font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;letter-spacing:.5px;color:var(--header-fg)}
+    .app-logo i{font-size:16px}
+    .header-meta{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8d8d8d}
+
+    .wrap{max-width:760px;margin:0 auto;padding:32px 24px 64px}
+    .page-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);margin-bottom:4px}
+    .page-title{font-size:28px;font-weight:300;margin-bottom:4px}
+    .page-title strong{font-weight:600}
+    .page-desc{font-size:14px;color:var(--text2);margin-bottom:24px}
+
+    .card{background:var(--card);border:1px solid var(--border);margin-bottom:16px}
+    .card-head{padding:14px 20px;border-bottom:1px solid var(--border);font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+    .card-body{padding:20px}
+
+    label.fld{display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px}
+    .mono{font-family:'IBM Plex Mono',monospace}
+    .row{display:flex;gap:8px}
+    input[type=text]{flex:1;font-family:inherit;font-size:14px;padding:10px 12px;border:none;border-bottom:1px solid var(--text2);background:var(--hover);color:var(--text)}
+    input[type=text]:focus{outline:none;border-bottom:2px solid var(--focus)}
+    input[type=number]{width:80px;font-family:'IBM Plex Mono',monospace;font-size:14px;padding:8px 10px;border:none;border-bottom:1px solid var(--text2);background:var(--hover)}
+
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:8px 20px;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;border:none;white-space:nowrap}
+    .btn-primary{background:var(--ink);color:var(--on-ink)}
+    .btn-primary:hover{opacity:.85}
+    .btn-primary:disabled{background:#8d8d8d;color:#f4f4f4;cursor:not-allowed;opacity:1}
+    .btn-secondary{background:var(--card);color:var(--text);border:1px solid var(--ink)}
+    .btn-secondary:hover{background:var(--hover)}
+    .btn-ghost{background:transparent;color:var(--text2);border:none}
+    .btn-ghost:hover{background:var(--hover);color:var(--text)}
+    .btn-lg{width:100%;min-height:48px;font-size:14px}
+    .btn-sm{min-height:32px;padding:4px 12px;font-size:12px}
+
+    .opt-grid{display:flex;flex-wrap:wrap;gap:8px}
+    .opt{position:relative;cursor:pointer}
+    .opt input{position:absolute;opacity:0}
+    .opt span{display:inline-flex;flex-direction:column;align-items:center;min-width:64px;padding:10px 14px;border:1px solid var(--border);background:var(--card);font-size:13px;font-weight:500;transition:all .15s}
+    .opt span small{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text2);font-weight:400;margin-top:2px}
+    .opt:hover span{border-color:var(--ink)}
+    .opt input:checked + span{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+    .opt input:checked + span small{color:var(--on-ink);opacity:.7}
+    .opt input:disabled + span{opacity:.4;cursor:not-allowed}
+
+    .switch-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+    .switch{position:relative;width:40px;height:20px;flex-shrink:0}
+    .switch input{opacity:0;width:0;height:0}
+    .slider{position:absolute;inset:0;background:#8d8d8d;transition:.2s;cursor:pointer}
+    .slider:before{content:'';position:absolute;height:14px;width:14px;left:3px;top:3px;background:#fff;transition:.2s}
+    .switch input:checked + .slider{background:var(--ink)}
+    .switch input:checked + .slider:before{transform:translateX(20px)}
+
+    .meta-strip{display:flex;gap:20px;align-items:center;padding:16px 20px;background:var(--hover);border-bottom:1px solid var(--border)}
+    .meta-strip img{width:120px;height:68px;object-fit:cover;background:#000;flex-shrink:0}
+    .meta-title{font-size:14px;font-weight:600;margin-bottom:4px}
+    .meta-sub{font-size:12px;color:var(--text2)}
+
+    .tag{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;font-size:11px;font-weight:500}
+    .tag-info{background:var(--info-l);color:var(--info)}
+    .tag-success{background:var(--success-l);color:var(--success)}
+    .tag-error{background:var(--error-l);color:var(--error)}
+
+    .progress-track{height:6px;background:var(--border);overflow:hidden;margin:4px 0 8px}
+    .progress-fill{height:100%;background:var(--info);width:0;transition:width .3s ease-out}
+    .progress-fill.indeterminate{width:35%;background:var(--ink);animation:indet 1.1s ease-in-out infinite}
+    .progress-fill.done{background:var(--success);width:100%}
+    @keyframes indet{0%{margin-left:-35%}100%{margin-left:100%}}
+    .prog-line{display:flex;justify-content:space-between;font-size:12px;color:var(--text2)}
+    .prog-line .mono{color:var(--text)}
+
+    .file-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+    .file-item:last-child{border-bottom:none}
+    .file-item i{color:var(--text2)}
+    .file-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .file-part{padding-left:20px;color:var(--text2)}
+
+    .hidden{display:none}
+    .banner{padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:10px;margin-bottom:16px}
+    .banner-error{background:var(--error-l);color:var(--error);border-left:3px solid var(--error)}
+    .banner-warn{background:#fff8e1;color:#735f00;border-left:3px solid var(--warn)}
+    .hint{font-size:11px;color:var(--text2);margin-top:6px}
+    .foot{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8d8d8d;margin-top:32px}
+
+    select{font-family:inherit;font-size:12px;color:var(--text);background:var(--card);border:1px solid var(--border);padding:6px 8px;cursor:pointer}
+    textarea{width:100%;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.5;padding:10px 12px;border:1px solid var(--border);background:var(--hover);color:var(--text);resize:vertical}
+    textarea:focus{outline:none;border-color:var(--focus)}
+    .theme-btn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid rgba(255,255,255,.25);color:var(--header-fg);cursor:pointer;font-size:13px}
+    .theme-btn:hover{background:rgba(255,255,255,.12)}
+    .q-row{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border);animation:fadeInUp .3s ease-out both}
+    .q-row:last-child{border-bottom:none}
+    .q-title{flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .q-title small{color:var(--text2);font-size:11px}
+    .q-prog{width:110px;height:6px;background:var(--border);overflow:hidden;flex-shrink:0}
+    .q-prog-fill{height:100%;background:var(--info);width:0;transition:width .3s}
+    .q-prog-fill.indeterminate{width:35%;background:var(--ink);animation:indet 1.1s ease-in-out infinite}
+    .q-prog-fill.done{background:var(--success);width:100%}
+    .q-prog-fill.err{background:var(--error);width:100%}
+    .q-pct{width:58px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2);flex-shrink:0}
+
+    @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+  </style>
+</head>
+<body>
+  <div class="accent-bar"></div>
+  <header class="app-header">
+    <div class="app-logo"><i class="fas fa-film"></i> VIDEODROP</div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <span class="header-meta" id="envMeta">local</span>
+      <button class="theme-btn" id="themeBtn" title="Toggle light / dark" aria-label="Toggle theme"><i class="fas fa-moon"></i></button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <p class="page-label">Downloader</p>
+    <h1 class="page-title">Drop a <strong>URL</strong></h1>
+    <p class="page-desc">Fetch any video, pick quality &amp; frame rate, optionally split into chunks. Everything runs locally.</p>
+
+    <div id="envBanner"></div>
+
+    <!-- Step 1: URL -->
+    <div class="card">
+      <div class="card-body">
+        <label class="fld" for="url">Video URL</label>
+        <div class="row">
+          <input type="text" id="url" placeholder="https://www.youtube.com/watch?v=…" autocomplete="off">
+          <button class="btn btn-secondary" id="fetchBtn"><i class="fas fa-magnifying-glass"></i> Fetch</button>
+        </div>
+        <div class="hint" id="fetchHint">Paste a link and fetch to see available qualities.</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
+          <span class="hint" style="margin:0">Cookies from</span>
+          <select id="browserSel"></select>
+          <span class="hint" style="margin:0">— used to pass the site's sign-in check</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: options (hidden until fetched) -->
+    <div class="card hidden" id="optCard">
+      <div class="meta-strip" id="metaStrip"></div>
+      <div class="card-body">
+        <div class="switch-row" style="margin-bottom:8px">
+          <label class="switch"><input type="checkbox" id="audioToggle"><span class="slider"></span></label>
+          <span style="font-size:13px;font-weight:500">Audio only (extract the sound)</span>
+        </div>
+
+        <div id="videoOpts">
+          <div style="margin-bottom:20px">
+            <label class="fld">Resolution</label>
+            <div class="opt-grid" id="qualityOpts"></div>
+          </div>
+
+          <div style="margin-bottom:20px">
+            <label class="fld">Frame rate</label>
+            <div class="opt-grid" id="fpsOpts">
+              <label class="opt"><input type="radio" name="fps" value="" checked><span>Source<small>as-is</small></span></label>
+              <label class="opt"><input type="radio" name="fps" value="30"><span>30<small>re-encode</small></span></label>
+              <label class="opt"><input type="radio" name="fps" value="24"><span>24<small>re-encode</small></span></label>
+              <label class="opt"><input type="radio" name="fps" value="15"><span>15<small>re-encode</small></span></label>
+            </div>
+            <div class="hint">Source keeps the original stream (fast, lossless). Any other value re-encodes with ffmpeg.</div>
+          </div>
+        </div>
+
+        <div id="audioOpts" class="hidden" style="margin-bottom:20px">
+          <label class="fld">Audio format</label>
+          <div class="opt-grid">
+            <label class="opt"><input type="radio" name="afmt" value="mp3" checked><span>MP3<small>universal</small></span></label>
+            <label class="opt"><input type="radio" name="afmt" value="m4a"><span>M4A<small>aac</small></span></label>
+          </div>
+        </div>
+
+        <div style="margin-bottom:20px">
+          <div class="switch-row" style="margin-bottom:0">
+            <label class="switch"><input type="checkbox" id="subsToggle"><span class="slider"></span></label>
+            <span style="font-size:13px;font-weight:500">Download subtitles</span>
+            <input type="text" id="subLangs" value="en" title="language codes, comma-separated (e.g. en,nl)"
+                   class="hidden" style="width:120px;flex:none;margin-left:8px">
+          </div>
+          <div class="hint" id="subsHint" style="margin-top:6px">Fetches SRT captions (incl. auto-generated) in the given languages.</div>
+        </div>
+
+        <div style="margin-bottom:20px">
+          <div class="switch-row">
+            <label class="switch"><input type="checkbox" id="trimToggle"><span class="slider"></span></label>
+            <span style="font-size:13px;font-weight:500">Trim to a time range (clip)</span>
+          </div>
+          <div id="trimOpts" class="hidden" style="display:flex;align-items:center;gap:8px;padding-left:50px">
+            <span style="font-size:13px;color:var(--text2)">from</span>
+            <input type="text" id="trimStart" placeholder="0:00" style="width:90px;flex:none">
+            <span style="font-size:13px;color:var(--text2)">to</span>
+            <input type="text" id="trimEnd" placeholder="end" style="width:90px;flex:none">
+            <span class="hint" style="margin:0 0 0 4px">mm:ss or h:mm:ss</span>
+          </div>
+        </div>
+
+        <div style="margin-bottom:20px">
+          <label class="fld">Split into chunks</label>
+          <div class="opt-grid" id="chunkModeOpts">
+            <label class="opt"><input type="radio" name="chunkmode" value="none" checked><span>Off<small>one file</small></span></label>
+            <label class="opt"><input type="radio" name="chunkmode" value="duration"><span>By time<small>minutes</small></span></label>
+            <label class="opt"><input type="radio" name="chunkmode" value="count"><span>By count<small>N parts</small></span></label>
+            <label class="opt"><input type="radio" name="chunkmode" value="size"><span>By size<small>MB</small></span></label>
+            <label class="opt" id="chapOpt"><input type="radio" name="chunkmode" value="chapters"><span>Chapters<small id="chapCount">—</small></span></label>
+          </div>
+          <div id="chunkValueRow" class="hidden" style="display:flex;align-items:center;gap:8px;margin-top:10px">
+            <span id="chunkValLabel" style="font-size:13px;color:var(--text2)"></span>
+            <input type="number" id="chunkValue" value="10" min="1" step="1">
+            <span id="chunkValUnit" style="font-size:13px;color:var(--text2)"></span>
+          </div>
+          <div class="hint" id="chunkHint" style="margin-top:8px">Chunks are stream-copied (fast, lossless); cuts snap to the nearest keyframe.</div>
+        </div>
+
+        <div style="margin-bottom:20px">
+          <label class="fld" for="outdir">Save to folder</label>
+          <input type="text" id="outdir" style="width:100%">
+        </div>
+
+        <button class="btn btn-primary btn-lg" id="downloadBtn"><i class="fas fa-download"></i> Download</button>
+      </div>
+    </div>
+
+    <!-- Step 3: progress -->
+    <div class="card hidden" id="progCard">
+      <div class="card-head"><i class="fas fa-gauge-high"></i> <span id="progStage">Working…</span>
+        <span id="progTag" style="margin-left:auto"></span></div>
+      <div class="card-body">
+        <div class="progress-track"><div class="progress-fill" id="progFill"></div></div>
+        <div class="prog-line"><span id="progMsg">Starting…</span><span class="mono" id="progPct"></span></div>
+        <div id="runActions" class="hidden" style="margin-top:16px">
+          <button class="btn btn-secondary" id="cancelBtn"><i class="fas fa-stop"></i> Cancel</button>
+        </div>
+        <div id="fileList" style="margin-top:16px"></div>
+        <div id="doneActions" class="hidden" style="margin-top:16px;display:flex;gap:8px">
+          <button class="btn btn-secondary" id="openBtn"><i class="fas fa-folder-open"></i> Open folder</button>
+          <button class="btn btn-secondary" id="retryBtn"><i class="fas fa-rotate-right"></i> Retry</button>
+          <button class="btn btn-secondary" id="againBtn"><i class="fas fa-rotate-left"></i> New download</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Batch / playlist -->
+    <div class="card" id="batchCard">
+      <div class="card-head"><i class="fas fa-layer-group"></i> Batch / playlist
+        <button class="btn btn-ghost btn-sm" id="batchToggle" style="margin-left:auto"><i class="fas fa-chevron-down"></i></button></div>
+      <div class="card-body hidden" id="batchBody">
+        <label class="fld" for="batchUrls">Paste video URLs (one per line) or a single playlist link</label>
+        <textarea id="batchUrls" rows="3" placeholder="https://www.youtube.com/watch?v=…
+https://www.youtube.com/playlist?list=…"></textarea>
+
+        <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin-top:16px">
+          <div>
+            <label class="fld">Quality</label>
+            <select id="bQuality">
+              <option value="2160">Up to 2160p</option>
+              <option value="1440">Up to 1440p</option>
+              <option value="1080" selected>Up to 1080p</option>
+              <option value="720">Up to 720p</option>
+              <option value="480">Up to 480p</option>
+              <option value="360">Up to 360p</option>
+              <option value="240">Up to 240p</option>
+              <option value="audio-mp3">Audio · MP3</option>
+              <option value="audio-m4a">Audio · M4A</option>
+            </select>
+          </div>
+          <div>
+            <label class="fld">Split</label>
+            <select id="bChunkMode">
+              <option value="none" selected>No split</option>
+              <option value="duration">By time (min)</option>
+              <option value="count">By count</option>
+              <option value="size">By size (MB)</option>
+            </select>
+          </div>
+          <div id="bChunkValWrap" class="hidden">
+            <label class="fld" id="bChunkValLabel">Value</label>
+            <input type="number" id="bChunkValue" value="10" min="1" step="1" style="width:90px">
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;padding-bottom:8px">
+            <input type="checkbox" id="bSubs"> subtitles
+            <input type="text" id="bSubLangs" value="en" class="hidden" style="width:80px;flex:none">
+          </label>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-top:16px">
+          <button class="btn btn-primary" id="batchBtn"><i class="fas fa-plus"></i> Add to queue</button>
+          <span class="hint" id="batchHint" style="margin:0"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Job queue -->
+    <div class="card hidden" id="queueCard">
+      <div class="card-head"><i class="fas fa-list-check"></i> Queue
+        <span class="mono" id="queueCount" style="margin-left:auto;font-size:12px;color:var(--text2)"></span>
+        <button class="btn btn-ghost btn-sm" id="clearDoneBtn" title="Remove finished rows"><i class="fas fa-broom"></i></button></div>
+      <div id="queueBody"></div>
+    </div>
+
+    <!-- Session history -->
+    <div class="card hidden" id="histCard">
+      <div class="card-head"><i class="fas fa-clock-rotate-left"></i> This session
+        <span class="mono" id="histCount" style="margin-left:auto;font-size:12px;color:var(--text2)"></span></div>
+      <div class="card-body" id="histBody" style="padding:8px 20px"></div>
+    </div>
+
+    <div class="foot">VIDEODROP · yt-dlp + ffmpeg · runs on your machine</div>
+  </main>
+
+<script>
+const $ = s => document.querySelector(s);
+let current = null;        // last probe result
+let currentJob = null;     // running job id (for cancel)
+let lastPayload = null;    // for retry
+const PART_RE = /(_part\d{3}|_ch\d{2}_)/i;
+const SUB_RE = /\.(srt|vtt)$/i;
+
+// ── prefs (localStorage) ──
+const PREFS_KEY='vd_prefs';
+function loadPrefs(){ try{ return JSON.parse(localStorage.getItem(PREFS_KEY))||{}; }catch(e){ return {}; } }
+function savePrefs(p){ localStorage.setItem(PREFS_KEY, JSON.stringify(Object.assign(loadPrefs(),p))); }
+const prefs = loadPrefs();
+
+// ── theme ──
+function applyTheme(t){
+  const root=document.documentElement;
+  if(t==='light'||t==='dark') root.setAttribute('data-theme',t); else root.removeAttribute('data-theme');
+  const dark = t==='dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches);
+  const i=$('#themeBtn') && $('#themeBtn').querySelector('i');
+  if(i) i.className = dark ? 'fas fa-sun' : 'fas fa-moon';
+}
+if(prefs.theme) applyTheme(prefs.theme);
+addEventListener('DOMContentLoaded', ()=>{
+  applyTheme(prefs.theme);
+  $('#themeBtn').addEventListener('click', ()=>{
+    const cur=document.documentElement.getAttribute('data-theme');
+    const sysDark=matchMedia('(prefers-color-scheme: dark)').matches;
+    const now = cur ? cur : (sysDark?'dark':'light');
+    const next = now==='dark' ? 'light' : 'dark';
+    applyTheme(next); savePrefs({theme:next});
+  });
+});
+
+// ── env + prefs restore ──
+fetch('/api/env').then(r=>r.json()).then(env=>{
+  const sel=$('#browserSel');
+  sel.innerHTML=(env.browser_choices||[env.browser]).map(b=>'<option value="'+b+'">'+b+'</option>').join('');
+  sel.value = prefs.browser || env.browser;
+  if(sel.value!==env.browser) setBrowser(sel.value);
+  $('#envMeta').textContent='cookies: '+sel.value;
+  sel.addEventListener('change',()=>setBrowser(sel.value));
+
+  $('#outdir').value = prefs.outdir || env.default_outdir;
+  if(prefs.fps!=null){ const r=document.querySelector('input[name=fps][value="'+prefs.fps+'"]'); if(r) r.checked=true; }
+  if(prefs.afmt){ const r=document.querySelector('input[name=afmt][value="'+prefs.afmt+'"]'); if(r) r.checked=true; }
+  if(prefs.subLangs) $('#subLangs').value=prefs.subLangs;
+  if(prefs.audioOnly){ $('#audioToggle').checked=true; $('#audioToggle').dispatchEvent(new Event('change')); }
+  if(prefs.subsOn){ $('#subsToggle').checked=true; $('#subsToggle').dispatchEvent(new Event('change')); }
+
+  if(env.problems && env.problems.length){
+    $('#envBanner').innerHTML='<div class="banner banner-warn"><i class="fas fa-triangle-exclamation"></i>'
+      +'<div>'+env.problems.map(p=>'· '+p).join('<br>')+'</div></div>';
+  }
+});
+function setBrowser(b){
+  fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({browser:b})});
+  savePrefs({browser:b}); $('#envMeta').textContent='cookies: '+b;
+}
+
+// ── fetch / probe ──
+$('#fetchBtn').addEventListener('click', probe);
+$('#url').addEventListener('keydown', e=>{ if(e.key==='Enter') probe(); });
+
+function fmtDur(s){ if(!s) return '—'; s=Math.round(s); const h=Math.floor(s/3600),m=Math.floor(s%3600/60),ss=s%60;
+  return (h?h+':':'')+String(m).padStart(h?2:1,'0')+':'+String(ss).padStart(2,'0'); }
+
+async function probe(){
+  const url = $('#url').value.trim();
+  if(!url) return;
+  const btn = $('#fetchBtn');
+  btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Fetching';
+  $('#fetchHint').textContent='Resolving formats (first fetch may take ~10s: solving the site challenge)…';
+  $('#optCard').classList.add('hidden');
+  try{
+    const res = await fetch('/api/probe',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({url})});
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+    current = data;
+    renderProbe(data);
+    $('#fetchHint').textContent='';
+  }catch(e){
+    $('#fetchHint').innerHTML='<span style="color:var(--error)"><i class="fas fa-circle-xmark"></i> '+e.message+'</span>';
+  }finally{
+    btn.disabled=false; btn.innerHTML='<i class="fas fa-magnifying-glass"></i> Fetch';
+  }
+}
+
+function renderProbe(d){
+  const extra=[];
+  if(d.chapters && d.chapters.length) extra.push(d.chapters.length+' chapters');
+  if(d.subtitle_langs && d.subtitle_langs.length) extra.push(d.subtitle_langs.length+' sub langs');
+  $('#metaStrip').innerHTML =
+    (d.thumbnail?'<img src="'+d.thumbnail+'" alt="">':'') +
+    '<div><div class="meta-title">'+escapeHtml(d.title)+'</div>'+
+    '<div class="meta-sub">'+(d.uploader?escapeHtml(d.uploader)+' · ':'')+
+    fmtDur(d.duration)+' · '+d.qualities.length+' qualities'+
+    (extra.length?' · '+extra.join(' · '):'')+'</div></div>';
+
+  const wrap = $('#qualityOpts'); wrap.innerHTML='';
+  d.qualities.forEach((q,i)=>{
+    const fpsLabel = q.fps.length ? q.fps[0]+'fps' : '';
+    const checked = (q.height<=720 && i>0 && !wrap.querySelector('input:checked')) || (d.qualities.length===1);
+    wrap.insertAdjacentHTML('beforeend',
+      '<label class="opt"><input type="radio" name="quality" value="'+q.height+'"'+(checked?' checked':'')+'>'+
+      '<span>'+q.height+'p<small>'+fpsLabel+'</small></span></label>');
+  });
+  if(!wrap.querySelector('input:checked')) { const f=wrap.querySelector('input'); if(f) f.checked=true; }
+  if(prefs.height){ const pr=wrap.querySelector('input[value="'+prefs.height+'"]'); if(pr) pr.checked=true; }
+
+  // chapters chunk-mode availability
+  const chapIn=$('#chapOpt').querySelector('input');
+  if(d.chapters && d.chapters.length){
+    chapIn.disabled=false; $('#chapCount').textContent=d.chapters.length+' parts';
+  }else{
+    chapIn.disabled=true; $('#chapCount').textContent='none';
+    if(chapIn.checked){ document.querySelector('input[name=chunkmode][value=none]').checked=true;
+      $('#chunkValueRow').classList.add('hidden'); }
+  }
+  $('#optCard').classList.remove('hidden');
+  $('#progCard').classList.add('hidden');
+}
+
+// ── audio-only toggle ──
+$('#audioToggle').addEventListener('change', e=>{
+  const on=e.target.checked;
+  $('#videoOpts').classList.toggle('hidden', on);
+  $('#audioOpts').classList.toggle('hidden', !on);
+});
+
+// ── subtitles toggle ──
+$('#subsToggle').addEventListener('change', e=>{
+  $('#subLangs').classList.toggle('hidden', !e.target.checked);
+});
+
+// ── trim toggle (mutually exclusive with chapter split) ──
+$('#trimToggle').addEventListener('change', e=>{
+  $('#trimOpts').classList.toggle('hidden', !e.target.checked);
+  $('#chapOpt').querySelector('input').disabled = e.target.checked ||
+    !(current && current.chapters && current.chapters.length);
+});
+
+// ── chunk mode ──
+const CHUNK_CFG = {
+  duration:{label:'every', unit:'minutes', def:10},
+  count:   {label:'into',  unit:'equal parts', def:4},
+  size:    {label:'max',   unit:'MB per part', def:100},
+};
+document.querySelectorAll('input[name=chunkmode]').forEach(r=>{
+  r.addEventListener('change', ()=>{
+    const m = document.querySelector('input[name=chunkmode]:checked').value;
+    const row = $('#chunkValueRow');
+    // chapters can't combine with trim
+    $('#trimToggle').disabled = (m==='chapters');
+    if(m==='chapters' && $('#trimToggle').checked){
+      $('#trimToggle').checked=false; $('#trimOpts').classList.add('hidden');
+    }
+    if(m==='none' || m==='chapters'){ row.classList.add('hidden'); return; }
+    const c = CHUNK_CFG[m];
+    $('#chunkValLabel').textContent = c.label;
+    $('#chunkValUnit').textContent = c.unit;
+    $('#chunkValue').value = c.def;
+    row.classList.remove('hidden');
+  });
+});
+
+// "1:23" / "1:02:03" / "83" -> seconds ; blank -> null
+function parseTime(s){
+  s=(s||'').trim();
+  if(!s || s.toLowerCase()==='end') return null;
+  const parts = s.split(':').map(Number);
+  if(parts.some(isNaN)) return null;
+  return parts.reduce((acc,v)=>acc*60+v, 0);
+}
+
+// ── download ──
+$('#downloadBtn').addEventListener('click', startDownload);
+
+function buildPayload(){
+  const audioOnly = $('#audioToggle').checked;
+  const q = document.querySelector('input[name=quality]:checked');
+  const mode = document.querySelector('input[name=chunkmode]:checked').value;
+  const p = {
+    url: $('#url').value.trim(),
+    outdir: $('#outdir').value.trim(),
+    audio_only: audioOnly,
+    audio_format: document.querySelector('input[name=afmt]:checked').value,
+    subs: $('#subsToggle').checked,
+    sub_langs: $('#subLangs').value.trim() || 'en',
+    chunk_mode: mode,
+    chunk_value: (mode==='none'||mode==='chapters') ? null
+                 : (parseFloat($('#chunkValue').value)||CHUNK_CFG[mode].def),
+  };
+  if(!audioOnly){
+    p.height = q ? parseInt(q.value) : null;
+    p.fps = document.querySelector('input[name=fps]:checked').value || null;
+  }
+  if(mode==='chapters') p.chapters = (current && current.chapters) || [];
+  if($('#trimToggle').checked && !$('#trimToggle').disabled){
+    p.trim_start = parseTime($('#trimStart').value);
+    p.trim_end = parseTime($('#trimEnd').value);
+  }
+  return p;
+}
+
+async function startDownload(){
+  const payload = buildPayload(); lastPayload = payload;
+  savePrefs({outdir:payload.outdir, fps:payload.fps||'', afmt:payload.audio_format,
+    subLangs:payload.sub_langs, audioOnly:payload.audio_only, subsOn:payload.subs,
+    height:payload.height||null});
+
+  $('#downloadBtn').disabled=true;
+  $('#progCard').classList.remove('hidden');
+  $('#doneActions').classList.add('hidden');
+  $('#runActions').classList.remove('hidden');
+  $('#cancelBtn').disabled=false; $('#cancelBtn').innerHTML='<i class="fas fa-stop"></i> Cancel';
+  $('#fileList').innerHTML='';
+  setProg({stage:'download',message:'Queued…',percent:null,status:'running'});
+  $('#progCard').scrollIntoView({behavior:'smooth',block:'nearest'});
+
+  const res = await fetch('/api/download',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload)});
+  const {job,error} = await res.json();
+  if(error){ setProg({status:'error',message:error}); finish({status:'error'}); return; }
+  currentJob = job;
+
+  const es = new EventSource('/api/events?job='+job);
+  es.onmessage = ev=>{
+    const s = JSON.parse(ev.data);
+    setProg(s);
+    if(['done','error','cancelled'].includes(s.status)){ es.close(); finish(s); }
+  };
+  es.onerror = ()=>{ es.close(); };
+}
+
+$('#cancelBtn').addEventListener('click', ()=>{
+  if(currentJob) fetch('/api/cancel',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({job:currentJob})});
+  $('#cancelBtn').disabled=true; $('#cancelBtn').innerHTML='<i class="fas fa-spinner fa-spin"></i> Cancelling…';
+});
+
+const STAGE_LABEL={download:'Downloading',trim:'Trimming',reencode:'Re-encoding',chunk:'Splitting',done:'Complete'};
+function setProg(s){
+  $('#progStage').textContent = STAGE_LABEL[s.stage]||'Working…';
+  $('#progMsg').textContent = s.message||'';
+  const fill=$('#progFill');
+  if(s.status==='error'){
+    $('#progTag').innerHTML='<span class="tag tag-error"><i class="fas fa-circle-xmark"></i> Error</span>';
+    fill.className='progress-fill'; fill.style.background='var(--error)'; fill.style.width='100%';
+    $('#progPct').textContent='';
+    return;
+  }
+  if(s.status==='cancelled'){
+    $('#progTag').innerHTML='<span class="tag tag-default" style="background:#e0e0e0;color:#393939"><i class="fas fa-ban"></i> Cancelled</span>';
+    fill.className='progress-fill'; fill.style.background='#8d8d8d'; fill.style.width='100%';
+    $('#progPct').textContent='';
+    return;
+  }
+  if(s.status==='done'){
+    $('#progTag').innerHTML='<span class="tag tag-success"><i class="fas fa-check"></i> Done</span>';
+    fill.className='progress-fill done'; $('#progPct').textContent='100%';
+    return;
+  }
+  $('#progTag').innerHTML='<span class="tag tag-info"><i class="fas fa-spinner fa-spin"></i> '+(STAGE_LABEL[s.stage]||'Working')+'</span>';
+  if(typeof s.percent==='number'){
+    fill.className='progress-fill'; fill.style.background='var(--info)'; fill.style.width=s.percent+'%';
+    $('#progPct').textContent = s.percent.toFixed(1)+'%' + (s.detail?'  ·  '+s.detail:'');
+  }else{
+    fill.className='progress-fill indeterminate';
+    $('#progPct').textContent = s.detail||'';
+  }
+}
+
+function fileRow(icon,name){
+  return '<div class="file-item"><i class="fas '+icon+'"></i><span class="file-name">'+escapeHtml(name)+'</span></div>';
+}
+
+function finish(s){
+  $('#downloadBtn').disabled=false; currentJob=null;
+  $('#runActions').classList.add('hidden');
+  $('#doneActions').classList.remove('hidden');
+  $('#openBtn').classList.toggle('hidden', s.status!=='done');
+  $('#retryBtn').classList.toggle('hidden', s.status==='done');
+  $('#retryBtn').onclick=()=>{ if(lastPayload) startDownload(); };
+  $('#againBtn').onclick=()=>{ $('#progCard').classList.add('hidden'); $('#url').focus(); };
+  if(s.status!=='done') return;
+
+  const files = s.files||[];
+  const parts = files.filter(f=>PART_RE.test(f));
+  const subsF = files.filter(f=>SUB_RE.test(f));
+  const mains = files.filter(f=>!PART_RE.test(f) && !SUB_RE.test(f));
+  let html='';
+  mains.forEach(f=>{ html+=fileRow('fa-file-video', baseName(f)); });
+  subsF.forEach(f=>{ html+=fileRow('fa-closed-captioning', baseName(f)); });
+  if(parts.length){
+    html+='<div class="file-item"><i class="fas fa-scissors"></i><span class="file-name">'+
+      parts.length+' chunks</span></div>';
+    parts.forEach(f=>{ html+='<div class="file-item file-part"><i class="fas fa-caret-right"></i>'+
+      '<span class="file-name">'+escapeHtml(baseName(f))+'</span></div>'; });
+  }
+  $('#fileList').innerHTML=html;
+  $('#openBtn').onclick=()=>openPath(files[0]||$('#outdir').value);
+  addHistory(files);
+}
+
+// ── session history (client-side) ──
+const history=[];
+function addHistory(files){
+  if(!files.length) return;
+  const primary = files[0];
+  const parts = files.filter(f=>PART_RE.test(f)).length;
+  history.unshift({name: baseName(primary), path: primary,
+    label: current ? current.title : baseName(primary), parts});
+  renderHistory();
+}
+function renderHistory(){
+  if(!history.length) return;
+  $('#histCard').classList.remove('hidden');
+  $('#histCount').textContent = history.length + (history.length===1?' download':' downloads');
+  $('#histBody').innerHTML = history.map(h=>
+    '<div class="file-item"><i class="fas fa-circle-check" style="color:var(--success)"></i>'+
+    '<span class="file-name" title="'+escapeHtml(h.name)+'">'+escapeHtml(h.label)+
+    (h.parts?' <span class="mono" style="color:var(--text2)">· '+h.parts+' chunks</span>':'')+'</span>'+
+    '<button class="btn btn-secondary" style="min-height:28px;padding:2px 10px;font-size:12px" '+
+    'onclick="openPath(\''+h.path.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">'+
+    '<i class="fas fa-folder-open"></i></button></div>'
+  ).join('');
+}
+function openPath(p){
+  fetch('/api/open',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:p})});
+}
+
+// ── batch / playlist ──
+$('#batchToggle').addEventListener('click', ()=>{
+  const body=$('#batchBody'); const hidden=body.classList.toggle('hidden');
+  $('#batchToggle').querySelector('i').className = hidden ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+});
+$('#bChunkMode').addEventListener('change', e=>{
+  const m=e.target.value, wrap=$('#bChunkValWrap');
+  if(m==='none'){ wrap.classList.add('hidden'); return; }
+  const c=CHUNK_CFG[m]; $('#bChunkValLabel').textContent=c.label+' ('+c.unit+')';
+  $('#bChunkValue').value=c.def; wrap.classList.remove('hidden');
+});
+$('#bSubs').addEventListener('change', e=>{ $('#bSubLangs').classList.toggle('hidden', !e.target.checked); });
+
+$('#batchBtn').addEventListener('click', async ()=>{
+  const urls = $('#batchUrls').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  if(!urls.length){ $('#batchHint').textContent='Paste at least one URL.'; return; }
+  const qv = $('#bQuality').value;
+  const mode = $('#bChunkMode').value;
+  const options = {
+    outdir: $('#outdir').value.trim(),
+    subs: $('#bSubs').checked, sub_langs: $('#bSubLangs').value.trim()||'en',
+    chunk_mode: mode,
+    chunk_value: mode==='none' ? null : (parseFloat($('#bChunkValue').value)||CHUNK_CFG[mode].def),
+  };
+  if(qv.startsWith('audio-')){ options.audio_only=true; options.audio_format=qv.split('-')[1]; }
+  else { options.height=parseInt(qv); }
+
+  const btn=$('#batchBtn'); btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Expanding…';
+  $('#batchHint').textContent='Expanding playlists and queueing…';
+  try{
+    const res=await fetch('/api/batch',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({urls, options})});
+    const data=await res.json();
+    if(data.error) throw new Error(data.error);
+    (data.jobs||[]).forEach(j=>{ batchJobs.add(j.job); ensureRow(j.job, j.title); });
+    ensureQueueStream();
+    $('#batchHint').textContent='Queued '+(data.jobs||[]).length+' item(s).';
+    $('#batchUrls').value='';
+  }catch(e){ $('#batchHint').innerHTML='<span style="color:var(--error)">'+escapeHtml(e.message)+'</span>'; }
+  finally{ btn.disabled=false; btn.innerHTML='<i class="fas fa-plus"></i> Add to queue'; }
+});
+
+// ── queue (aggregate SSE) ──
+const batchJobs = new Set();
+let queueES = null;
+function ensureQueueStream(){
+  $('#queueCard').classList.remove('hidden');
+  if(queueES) return;
+  queueES = new EventSource('/api/events-all');
+  queueES.onmessage = ev=>{ const s=JSON.parse(ev.data); if(batchJobs.has(s.job)) updateRow(s); };
+}
+function ensureRow(job, title){
+  if($('#q_'+job)) return;
+  $('#queueBody').insertAdjacentHTML('beforeend',
+    '<div class="q-row" id="q_'+job+'">'+
+      '<i class="fas fa-clock" style="color:var(--text2)" data-ic></i>'+
+      '<span class="q-title">'+escapeHtml(title||job)+'</span>'+
+      '<div class="q-prog"><div class="q-prog-fill" data-fill></div></div>'+
+      '<span class="q-pct" data-pct>queued</span>'+
+      '<button class="btn btn-ghost btn-sm" data-cancel title="Cancel"><i class="fas fa-xmark"></i></button>'+
+    '</div>');
+  $('#q_'+job).querySelector('[data-cancel]').onclick=()=>{
+    fetch('/api/cancel',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({job})});
+  };
+  updateQueueCount();
+}
+function updateRow(s){
+  ensureRow(s.job, s.title);
+  const row=$('#q_'+s.job); if(!row) return;
+  const ic=row.querySelector('[data-ic]'), fill=row.querySelector('[data-fill]'), pct=row.querySelector('[data-pct]');
+  const cancelBtn=row.querySelector('[data-cancel]');
+  if(s.title) row.querySelector('.q-title').innerHTML=escapeHtml(s.title);
+  if(s.status==='done'){
+    ic.className='fas fa-circle-check'; ic.style.color='var(--success)';
+    fill.className='q-prog-fill done'; pct.textContent='done';
+    cancelBtn.innerHTML='<i class="fas fa-folder-open"></i>';
+    cancelBtn.onclick=()=>openPath((s.files&&s.files[0])||$('#outdir').value);
+  }else if(s.status==='error'){
+    ic.className='fas fa-circle-xmark'; ic.style.color='var(--error)';
+    fill.className='q-prog-fill err'; pct.textContent='error'; pct.title=s.message||'';
+    cancelBtn.style.visibility='hidden';
+  }else if(s.status==='cancelled'){
+    ic.className='fas fa-ban'; ic.style.color='var(--text2)';
+    fill.className='q-prog-fill'; fill.style.width='0'; pct.textContent='cancelled';
+    cancelBtn.style.visibility='hidden';
+  }else if(s.status==='queued'){
+    pct.textContent='queued';
+  }else{ // running
+    ic.className='fas fa-spinner fa-spin'; ic.style.color='var(--info)';
+    if(typeof s.percent==='number'){ fill.className='q-prog-fill'; fill.style.width=s.percent+'%'; pct.textContent=s.percent.toFixed(0)+'%'; }
+    else { fill.className='q-prog-fill indeterminate'; pct.textContent=STAGE_LABEL[s.stage]||'…'; }
+  }
+  updateQueueCount();
+}
+function updateQueueCount(){
+  const rows=[...document.querySelectorAll('.q-row')];
+  const active=rows.filter(r=>{ const t=r.querySelector('[data-pct]').textContent; return !['done','error','cancelled'].includes(t); }).length;
+  $('#queueCount').textContent = rows.length+' job'+(rows.length===1?'':'s')+(active?' · '+active+' active':'');
+}
+$('#clearDoneBtn').addEventListener('click', ()=>{
+  document.querySelectorAll('.q-row').forEach(r=>{
+    const t=r.querySelector('[data-pct]').textContent;
+    if(['done','error','cancelled'].includes(t)){ batchJobs.delete(r.id.slice(2)); r.remove(); }
+  });
+  if(!document.querySelectorAll('.q-row').length) $('#queueCard').classList.add('hidden');
+  updateQueueCount();
+});
+
+function baseName(p){ return p.split(/[\\/]/).pop(); }
+function escapeHtml(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+</script>
+</body>
+</html>
