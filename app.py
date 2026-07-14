@@ -521,11 +521,13 @@ class Handler(BaseHTTPRequestHandler):
                 data = self._read_json()
                 target = data.get("path") or DEFAULT_OUTDIR
                 p = Path(target)
-                folder = p if p.is_dir() else p.parent
-                try:
-                    os.startfile(str(folder))  # Windows
-                except AttributeError:
-                    subprocess.Popen(["xdg-open", str(folder)])
+                folder = str(p if p.is_dir() else p.parent)
+                if sys.platform == "win32":
+                    os.startfile(folder)
+                elif sys.platform == "darwin":
+                    subprocess.Popen(["open", folder])
+                else:
+                    subprocess.Popen(["xdg-open", folder])
                 self._send_json({"ok": True})
             else:
                 self.send_error(404)

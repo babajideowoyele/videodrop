@@ -1,36 +1,45 @@
 # VIDEODROP
 
-A small, local video downloader with a Carbon-styled UI (matching the SYNAPSIS /
-MaskingOPS look). Paste a URL, pick resolution and frame rate, optionally split the
-result into fixed-duration chunks. Everything runs on your machine — the only network
-traffic is yt-dlp talking to the video host.
+A small, local video downloader with a clean single-page UI. Paste a URL (or a whole
+playlist), pick resolution / frame rate / audio-only, grab subtitles, trim to a clip,
+and optionally split the result into chunks. Everything runs on your own machine — the
+only network traffic is yt-dlp talking to the video host.
 
-## Run
+Built on [yt-dlp](https://github.com/yt-dlp/yt-dlp) + [ffmpeg](https://ffmpeg.org/),
+with a zero-dependency Python standard-library server and a static HTML front end.
 
-```powershell
-cd C:\Users\User\tools\videodrop
-python app.py
+## Prerequisites
+
+You need three tools on your `PATH`:
+
+| Tool     | Why                              | Install |
+|----------|----------------------------------|---------|
+| Python 3.8+ | runs the local server         | [python.org](https://www.python.org/downloads/) |
+| yt-dlp   | download + format probing        | `pip install -U yt-dlp` |
+| ffmpeg   | fps re-encode, trim, chunking    | Windows: `winget install Gyan.FFmpeg` · macOS: `brew install ffmpeg` · Linux: `apt install ffmpeg` |
+| Node.js  | solves YouTube's JS challenge    | [nodejs.org](https://nodejs.org/) |
+
+(Node is only needed for sites like YouTube that require solving a JS challenge.)
+
+## Quick start
+
+```bash
+git clone https://github.com/babajideowoyele/videodrop.git
+cd videodrop
+python app.py          # use python3 on macOS/Linux
 ```
 
-It prints the URL and opens `http://127.0.0.1:7654` in your browser. Press `Ctrl+C`
-in the terminal to stop. (`run.ps1` does the same thing.)
+It prints the address and opens `http://127.0.0.1:7654` in your browser. Press
+`Ctrl+C` in the terminal to stop. On Windows you can also run `run.ps1`.
 
-## How it works
-
-- **Backend** (`app.py`) — Python standard-library HTTP server, no pip install needed.
-  It shells out to:
-  - **yt-dlp** for probing formats and downloading, invoked with the flags that get
-    past YouTube's bot-check on this machine:
-    `--js-runtimes node --remote-components ejs:github --cookies-from-browser firefox`
-  - **ffmpeg** for optional fps re-encoding and duration-based chunking.
-- **Frontend** (`index.html`) — single Carbon page, talks to the backend over JSON +
-  Server-Sent Events for live progress.
+Downloads go to your **Downloads** folder by default; change the target per download
+in the UI.
 
 ## Features
 
 - **Fetch** resolves the available resolutions, chapters, and subtitle languages for
   a URL before you commit.
-- **Resolution** — download at any height the source offers (144p → 1080p+).
+- **Resolution** — download at any height the source offers (144p → 2160p).
 - **Frame rate** — *Source* keeps the original stream (fast, lossless). Any other
   value (30 / 24 / 15) re-encodes with ffmpeg (`libx264`, veryfast, CRF 20).
 - **Audio only** — extract just the sound as **MP3** or **M4A** (`-x`, best quality).
@@ -43,21 +52,27 @@ in the terminal to stop. (`run.ps1` does the same thing.)
   - **By size** — parts under ~N MB (estimated from bitrate).
   - **By chapters** — one file per chapter marker, named after the chapter.
 
-  All are stream-copied (fast, lossless); parts land in a `<title>_parts/` subfolder.
+  Parts land in a `<title>_parts/` subfolder.
+- **Batch / playlist** — paste many URLs (one per line) or a single playlist link;
+  each expands and enters a **job queue** processed by a worker pool (2 concurrent
+  downloads). The queue shows per-job progress with a cancel button on each row.
 - **Cancel** a running job; the download aborts and cleans up.
 - **Live progress** — percentage, download speed, ETA, and fragment count.
 - **Retry** a failed download with one click.
 - **Cookie source picker** — switch between Firefox / Chrome / Edge / Brave / none in
   the UI (no restart).
 - **Remembered settings** — output folder, quality, fps, audio format, subtitle
-  languages, and cookie source persist across sessions (browser localStorage).
+  languages, cookie source, and theme persist across sessions (browser localStorage).
 - **Session history** — every download this session, with a jump-to-folder button.
-- **Save to folder** — defaults to your Downloads folder; editable per download.
-- **Batch / playlist** — paste many URLs (one per line) or a single playlist link;
-  each expands and enters a **job queue** processed by a worker pool (2 concurrent
-  downloads). The queue shows per-job progress with a cancel button on each row.
-- **Dark mode** — light/dark toggle in the header; follows your system theme by
-  default and remembers your choice. The brand bar stays dark in both.
+- **Dark mode** — light/dark toggle in the header; follows your system theme by default.
+
+## How it works
+
+- **Backend** (`app.py`) — Python standard-library HTTP server (no pip packages). It
+  shells out to **yt-dlp** for probing/downloading and **ffmpeg** for fps re-encoding,
+  trimming, and chunking. Downloads run in a small worker pool.
+- **Frontend** (`index.html`) — a single self-contained page that talks to the backend
+  over JSON + Server-Sent Events for live progress.
 
 ## Notes on combinations
 
@@ -66,29 +81,31 @@ in the terminal to stop. (`run.ps1` does the same thing.)
 - **Audio only** hides the resolution/fps controls; chunking, trim, and subtitles
   still apply to the audio.
 
-## Requirements (all already present on this machine)
-
-| Tool   | Why                                   |
-|--------|---------------------------------------|
-| yt-dlp | download + format probe               |
-| ffmpeg | fps re-encode, chunking               |
-| node   | solves YouTube's JS challenge         |
-
 ## Configuration
 
-- **Cookies browser** — YouTube requires a signed-in cookie jar. Defaults to Firefox
-  (Chrome/Edge lock their cookie DB while running). Override:
-  ```powershell
-  $env:VIDEODROP_BROWSER = "chrome"   # or edge, brave, none
-  python app.py
+- **Cookies from browser** — many sites (YouTube) require a signed-in cookie jar.
+  Pick the source in the UI, or set the default before launch:
+  ```bash
+  # macOS/Linux
+  VIDEODROP_BROWSER=chrome python app.py     # or firefox, edge, brave, none
   ```
+  ```powershell
+  # Windows PowerShell
+  $env:VIDEODROP_BROWSER = "chrome"; python app.py
+  ```
+  Chrome/Edge lock their cookie database while the browser is running — if extraction
+  fails, close the browser or use Firefox (which doesn't lock).
 - **Port** — edit `PORT` at the top of `app.py` (default 7654).
+- **Concurrent downloads** — edit `WORKERS` at the top of `app.py` (default 2).
 
 ## Notes / limits
 
-- First fetch of a new video takes ~10s while yt-dlp downloads the site's challenge
-  solver; subsequent ones are quick.
-- Chunk boundaries snap to the nearest keyframe (a property of lossless stream-copy),
-  so a "5 minute" chunk may be off by a second or two. Re-encode first if you need
-  frame-exact cuts.
-- Single video only (`--no-playlist`).
+- First fetch of a new site takes a few seconds while yt-dlp downloads the challenge
+  solver; subsequent fetches are quick.
+- **By time / size** chunk boundaries snap to the nearest keyframe (a property of
+  lossless stream-copy), so a "5 minute" chunk may be off by a second or two. **By
+  count** and **by chapters** cut each part explicitly for an exact result.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
